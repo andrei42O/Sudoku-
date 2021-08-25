@@ -3,7 +3,7 @@ import random
 from engine import sudokuService
 from test import Testing
 from PySide6 import QtCore, QtWidgets
-from observer import FocusObserver, Observer
+from observer import ButtonPressObservable, FocusObserver, Observer
 
 class cellGUI(QtWidgets.QLabel, Observer, FocusObserver):
     def __init__(self, x, y, nr, serv):
@@ -78,13 +78,35 @@ class cellGUI(QtWidgets.QLabel, Observer, FocusObserver):
                 box.setText("salut")
                 box.setWindowTitle("Warning!")
                 box.exec()
-                
+
     def focusUpdate(self):
         self.__drawCell()
 
-class buttons(QtWidgets.QWidget):
-    def __init__(self):
+class button(QtWidgets.QPushButton):
+    def __init__(self, text, serv):
         super().__init__()
+        self.__serv = serv
+        self.setText(text)
+        self.setStyleSheet("background-color: #4cc9f0; color: #e5e5e5;")
+        self.setFixedSize(50, 50)
+        self.setContentsMargins(0, 0, 0, 0)
+        self.mousePressEvent = self.emitSignal
+        #self.connect(btn, QtCore.SIGNAL("clicked()"), self.emitSignal(btn))
+    
+    @QtCore.Slot()
+    def emitSignal(self, event):
+        '''
+            Emit a notification to change the cell content
+        '''
+        print(self.text())
+        self.__serv.recieveNumber(int(self.text()))
+
+    
+
+class buttons(QtWidgets.QWidget):
+    def __init__(self, serv):
+        super().__init__()
+        self.__serv = serv
         layout = QtWidgets.QVBoxLayout()
         #layout.addStretch()
         self.setLayout(layout)
@@ -103,23 +125,11 @@ class buttons(QtWidgets.QWidget):
 
             tempW.setLayout(tempL)
             for j in range(0, 3):
-                btn = QtWidgets.QPushButton(str(k))
-                btn.setStyleSheet("background-color: #4cc9f0; color: #e5e5e5;")
-                btn.setFixedSize(50, 50)
-                btn.setContentsMargins(0, 0, 0, 0)
-                btn.mousePressEvent = self.emitSignal
-                tempL.addWidget(btn)
+                tempL.addWidget(button(str(k), self.__serv))
                 k += 1
             layout.addWidget(tempW)
         layout.setAlignment(QtCore.Qt.AlignCenter) #without this line the buttons won't remaing close and  centered
 
-
-    @QtCore.Slot()
-    def emitSignal(self, event):
-        '''
-            Emit a notification to change the cell content
-        '''
-        print("salut")
 
 class SudokuTable(QtWidgets.QWidget):
 
@@ -190,7 +200,7 @@ class SudokuTable(QtWidgets.QWidget):
         tempL.addWidget(self.resetButton)
         tempL.addWidget(self.undoButton)
         mainL.addLayout(tempL)
-        mainL.addWidget(buttons())
+        mainL.addWidget(buttons(self.__serv))
       #  mainL.setAlignment(QtCore.Qt.AlignCenter)
         return mainL
 

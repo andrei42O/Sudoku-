@@ -34,3 +34,23 @@ class FocusObservable:
 
     def unfocusObject(self):
         self.__obj.focusUpdate()
+
+############################################
+
+class ButtonPressObserver:
+    def __init__(self) -> None:
+        pass
+
+    def recieveNumber(self, nr):
+        pass
+
+class ButtonPressObservable:
+    def __init__(self):
+        self.__objs = []
+
+    def addButtonListeners(self, ob):
+        self.__objs.append(ob)
+
+    def notifyButtonPressed(self, nr):
+        for ob in self.__objs:
+            ob.recieveNumber(nr)

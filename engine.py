@@ -1,4 +1,4 @@
-from observer import FocusObservable, Observable
+from observer import ButtonPressObserver, FocusObservable, Observable
 
 class undoClass:
     def __init__(self):
@@ -26,6 +26,7 @@ class sudokuService(Observable, FocusObservable):
         self.__undo = undoClass()
         self.__x = None
         self.__y = None
+        self.__currentCell = None
 
     def __checkLine(self, x, y):
         for i in range(0, 9):
@@ -82,8 +83,8 @@ class sudokuService(Observable, FocusObservable):
         if str(T).lower() != "undo":
             self.__undo.addAction(self.deleteNumber, x, y, self.__matrix[x * 9 + y], "undo")
         self.__matrix[x * 9 + y] = number
-        self.__checkChoice(x, y)
         Observable.notify(self, x, y)
+        self.__checkChoice(x, y)
         
     def getElement(self, x, y):
         return self.__matrix[x * 9 + y]
@@ -104,4 +105,10 @@ class sudokuService(Observable, FocusObservable):
             pass
         self.__x = cell.getX()
         self.__y = cell.getY()
+        self.__currentCell = cell
         FocusObservable.setFocusedObj(self, cell)
+
+    def recieveNumber(self, nr):
+        print("Recieved!")
+        if self.__x != None and self.__y != None:
+            self.setNumber(self.__x, self.__y, int(nr))
