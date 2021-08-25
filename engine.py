@@ -24,6 +24,8 @@ class sudokuService(Observable):
         self.__baseMatrix = [-1] * 81
         self.__matrix = self.__baseMatrix[:]
         self.__undo = undoClass()
+        self.__x = None
+        self.__y = None
 
     def __checkLine(self, x, y):
         for i in range(0, 9):
@@ -96,3 +98,10 @@ class sudokuService(Observable):
     def reset(self):
         self.__matrix = self.__baseMatrix[:]
         self.__undo.reset()
+
+    def setCurrentCoordinates(self, x, y):
+        if self.__x != None and self.__y != None:
+            #notify the last cell to unfocus
+            pass
+        self.__x = x
+        self.__y = y

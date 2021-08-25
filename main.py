@@ -17,7 +17,7 @@ class cellGUI(QtWidgets.QLabel, Observer):
         self.setAlignment(QtCore.Qt.AlignCenter)
         self.__drawCell()
         self.setMinimumSize(30, 30)
-        self.mousePressEvent = self.updateCell
+        self.mousePressEvent = self.focusCell
         self.setContentsMargins(0, 0, 0, 0)
         self.__serv.addObserver(self)
     
@@ -53,11 +53,62 @@ class cellGUI(QtWidgets.QLabel, Observer):
                 self.__valid = 0
             self.__drawCell()
 
+    @QtCore.Slot()
+    def focusCell(self, event):
+        if self.__nr != -1:
+            self.setText(str(self.__nr))
+        else: 
+            self.setText("")
+        if self.__valid:
+            self.setStyleSheet("color: black; background-color: #E9ECEF; border: 3px solid black;")
+        else:
+            self.setStyleSheet("color: red; background-color: #E9ECEF; border: 3px solid red;")
+        self.__serv.setCurrentCoordinates(self.__x, self.__y)
+
     def reset(self):
         self.__nr = self.__baseValue
         self.__valid = 1
         self.__drawCell()
         
+
+class buttons(QtWidgets.QWidget):
+    def __init__(self):
+        super().__init__()
+        layout = QtWidgets.QVBoxLayout()
+        #layout.addStretch()
+        self.setLayout(layout)
+        layout.setSpacing(0)
+        layout.setContentsMargins(0, 0, 0, 0)
+        self.setContentsMargins(0, 0, 0, 0)
+        k = 1
+        for i in range(0, 3):
+            tempW = QtWidgets.QWidget()
+            tempW.setStyleSheet("background-color: black;")
+            tempW.setContentsMargins(0, 0, 0, 0)
+
+            tempL = QtWidgets.QHBoxLayout()
+            tempL.setSpacing(2)
+            tempL.setContentsMargins(0, 0, 0, 0)
+
+            tempW.setLayout(tempL)
+            for j in range(0, 3):
+                btn = QtWidgets.QPushButton(str(k))
+                btn.setStyleSheet("background-color: #4cc9f0; color: #e5e5e5;")
+                btn.setFixedSize(50, 50)
+                btn.setContentsMargins(0, 0, 0, 0)
+                btn.mousePressEvent = self.emitSignal
+                tempL.addWidget(btn)
+                k += 1
+            layout.addWidget(tempW)
+        layout.setAlignment(QtCore.Qt.AlignCenter) #without this line the buttons won't remaing close and  centered
+
+
+    @QtCore.Slot()
+    def emitSignal(self, event):
+        '''
+            Emit a notification to change the cell content
+        '''
+        print("salut")
 
 class SudokuTable(QtWidgets.QWidget):
 
@@ -122,6 +173,16 @@ class SudokuTable(QtWidgets.QWidget):
         QtCore.QObject.connect(self.resetButton, QtCore.SIGNAL('clicked()'), self.resetTable)
         QtCore.QObject.connect(self.undoButton, QtCore.SIGNAL('clicked()'), self.undo)
 
+    def __rightPart(self):
+        mainL = QtWidgets.QVBoxLayout()
+        tempL = QtWidgets.QHBoxLayout()
+        tempL.addWidget(self.resetButton)
+        tempL.addWidget(self.undoButton)
+        mainL.addLayout(tempL)
+        mainL.addWidget(buttons())
+      #  mainL.setAlignment(QtCore.Qt.AlignCenter)
+        return mainL
+
     def __init__(self, serv):
         super().__init__()
         self.__serv = serv
@@ -136,8 +197,7 @@ class SudokuTable(QtWidgets.QWidget):
         self.undoButton = QtWidgets.QPushButton("Undo")
         self.resetButton.setStyleSheet("background-color: #00bbf9;")
         self.undoButton.setStyleSheet("background-color: #00bbf9;")
-        self.tempLayout.addWidget(self.resetButton)
-        self.tempLayout.addWidget(self.undoButton)
+        self.tempLayout.addLayout(self.__rightPart())
         self.__assignSignals()
         self.setWindowTitle("Sudoku!")
         
