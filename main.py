@@ -3,10 +3,9 @@ import random
 from engine import sudokuService
 from test import Testing
 from PySide6 import QtCore, QtWidgets
-from PySide6.QtGui import QBrush, QColor
-from observer import Observable, Observer
+from observer import FocusObserver, Observer
 
-class cellGUI(QtWidgets.QLabel, Observer):
+class cellGUI(QtWidgets.QLabel, Observer, FocusObserver):
     def __init__(self, x, y, nr, serv):
         super().__init__()
         self.__serv = serv
@@ -31,17 +30,6 @@ class cellGUI(QtWidgets.QLabel, Observer):
         else:
             self.setStyleSheet("color: red; background-color: #E9ECEF; border: 1px solid red;")
 
-    def undo(self, x, y):
-        if x == self.__x and y == self.__y:
-            try:
-                self.__nr = self.__serv.getElement(x, y)
-                self.__valid = self.__serv.checkValidity(x, y)
-                self.__drawCell()
-            except Exception as e:
-                box = QtWidgets.QMessageBox()
-                box.setText("salut")
-                box.setWindowTitle("Warning!")
-                box.exec()
 
     @QtCore.Slot()
     def updateCell(self, event):
@@ -63,13 +51,36 @@ class cellGUI(QtWidgets.QLabel, Observer):
             self.setStyleSheet("color: black; background-color: #E9ECEF; border: 3px solid black;")
         else:
             self.setStyleSheet("color: red; background-color: #E9ECEF; border: 3px solid red;")
-        self.__serv.setCurrentCoordinates(self.__x, self.__y)
+        self.__serv.setCurrentCell(self)
 
     def reset(self):
         self.__nr = self.__baseValue
         self.__valid = 1
         self.__drawCell()
-        
+
+    def getX(self):
+        return self.__x
+
+    def getY(self):
+        return self.__y
+
+    #inherited functions
+
+    def undo(self, x, y):
+        #Inherited from 'Observer'
+        if x == self.__x and y == self.__y:
+            try:
+                self.__nr = self.__serv.getElement(x, y)
+                self.__valid = self.__serv.checkValidity(x, y)
+                self.__drawCell()
+            except Exception as e:
+                box = QtWidgets.QMessageBox()
+                box.setText("salut")
+                box.setWindowTitle("Warning!")
+                box.exec()
+                
+    def focusUpdate(self):
+        self.__drawCell()
 
 class buttons(QtWidgets.QWidget):
     def __init__(self):

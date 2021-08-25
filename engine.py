@@ -1,4 +1,4 @@
-from observer import Observable
+from observer import FocusObservable, Observable
 
 class undoClass:
     def __init__(self):
@@ -18,7 +18,7 @@ class undoClass:
         self.__undo.clear()
 
 
-class sudokuService(Observable):
+class sudokuService(Observable, FocusObservable):
     def __init__(self):
         super().__init__()
         self.__baseMatrix = [-1] * 81
@@ -91,7 +91,6 @@ class sudokuService(Observable):
     def undo(self):
         self.__undo.undoAction()
         
-
     def getMatrix(self):
         return self.__matrix[:]
 
@@ -99,9 +98,10 @@ class sudokuService(Observable):
         self.__matrix = self.__baseMatrix[:]
         self.__undo.reset()
 
-    def setCurrentCoordinates(self, x, y):
+    def setCurrentCell(self, cell):
         if self.__x != None and self.__y != None:
-            #notify the last cell to unfocus
+            FocusObservable.unfocusObject(self)
             pass
-        self.__x = x
-        self.__y = y
+        self.__x = cell.getX()
+        self.__y = cell.getY()
+        FocusObservable.setFocusedObj(self, cell)
