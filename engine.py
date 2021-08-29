@@ -27,6 +27,11 @@ class sudokuService(Observable, FocusObservable):
         self.__x = None
         self.__y = None
         self.__currentCell = None
+        self.__filledCells = 0
+        self.__startingFilledCells = 0
+
+    def __resetCellCoordinates(self):
+        self.__x, self.__y, self.__currentCell = None, None, None
 
     def __checkLine(self, x, y):
         for i in range(0, 9):
@@ -74,17 +79,37 @@ class sudokuService(Observable, FocusObservable):
 
     def deleteNumber(self, x, y, oldNumber, T = None):
         if str(T).lower() != "undo":
-            self.__undo.addAction(self.setNumber, x, y, self.__matrix[x * 9 + y], "undo")
+            if self.__matrix[x * 9 + y] == -1:
+                pass
+            else:
+                self.__undo.addAction(self.setNumber, x, y, self.__matrix[x * 9 + y], "undo")
+                if self.__currentCell != None:
+                    print(self.__currentCell.getX(), self.__currentCell.getY())
+                else:
+                    raise Exception("Please select a cell first!")
+        #We deleted the contect of the current cell and unfocused it, so the currentCell doesn't exist
         self.__matrix[x * 9 + y] = oldNumber
+        if str(T).lower() == "undo":
+            self.__resetCellCoordinates()
         Observable.notify(self, x, y)
+        if self.__currentCell != None:
+            self.__currentCell.focusCell()
 
-        
     def setNumber(self, x, y, number, T = None):
         if str(T).lower() != "undo":
             self.__undo.addAction(self.deleteNumber, x, y, self.__matrix[x * 9 + y], "undo")
         self.__matrix[x * 9 + y] = number
-        Observable.notify(self, x, y)
+        #Observable.notify(self, x, y)
+        if str(T).lower() != "undo" and self.__currentCell != None:
+            self.__currentCell.focusCell(None)
+        if str(T).lower() == "undo":
+            self.__resetCellCoordinates()
         self.__checkChoice(x, y)
+        self.__filledCells += 1
+        #game WON
+        if self.__filledCells:
+            #to fill with close and new game box
+            pass
         
     def getElement(self, x, y):
         return self.__matrix[x * 9 + y]
@@ -98,17 +123,25 @@ class sudokuService(Observable, FocusObservable):
     def reset(self):
         self.__matrix = self.__baseMatrix[:]
         self.__undo.reset()
+        self.__filledCells = self.__startingFilledCells
+        self.__resetCellCoordinates()
 
     def setCurrentCell(self, cell):
-        if self.__x != None and self.__y != None:
+        if self.__x != None and self.__y != None and (self.__x != cell.getX() and self.__y != cell.getY()):
             FocusObservable.unfocusObject(self)
-            pass
         self.__x = cell.getX()
         self.__y = cell.getY()
         self.__currentCell = cell
         FocusObservable.setFocusedObj(self, cell)
 
     def recieveNumber(self, nr):
-        print("Recieved!")
         if self.__x != None and self.__y != None:
             self.setNumber(self.__x, self.__y, int(nr))
+            print("Recieved!")
+
+    def emptyCell(self):
+#        print(self.__x, self.__y)
+        if self.__x != None and self.__y != None:
+            self.deleteNumber(self.__x, self.__y, -1)
+        else:
+            raise Exception("There is not cell selected!")

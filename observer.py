@@ -2,7 +2,7 @@ class Observer:
     def __init__(self):
         pass
     
-    def undo(self, *args):
+    def update(self, *args):
         pass
 
 class Observable:
@@ -14,7 +14,7 @@ class Observable:
 
     def notify(self, x, y):
         for ob in self.__objs:
-            ob.undo(x, y)
+            ob.update(x, y)
 
 ############################################
 

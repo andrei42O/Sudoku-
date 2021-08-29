@@ -5,6 +5,12 @@ from test import Testing
 from PySide6 import QtCore, QtWidgets
 from observer import ButtonPressObservable, FocusObserver, Observer
 
+def errorBox(err):
+    box = QtWidgets.QMessageBox()
+    box.setText(err)
+    box.setWindowTitle("Warning!")
+    box.exec()
+
 class cellGUI(QtWidgets.QLabel, Observer, FocusObserver):
     def __init__(self, x, y, nr, serv):
         super().__init__()
@@ -66,7 +72,7 @@ class cellGUI(QtWidgets.QLabel, Observer, FocusObserver):
 
     #inherited functions
 
-    def undo(self, x, y):
+    def update(self, x, y, type = None):
         #Inherited from 'Observer'
         if x == self.__x and y == self.__y:
             try:
@@ -74,10 +80,7 @@ class cellGUI(QtWidgets.QLabel, Observer, FocusObserver):
                 self.__valid = self.__serv.checkValidity(x, y)
                 self.__drawCell()
             except Exception as e:
-                box = QtWidgets.QMessageBox()
-                box.setText("salut")
-                box.setWindowTitle("Warning!")
-                box.exec()
+                errorBox(str(e))
 
     def focusUpdate(self):
         self.__drawCell()
@@ -100,8 +103,6 @@ class button(QtWidgets.QPushButton):
         '''
         print(self.text())
         self.__serv.recieveNumber(int(self.text()))
-
-    
 
 class buttons(QtWidgets.QWidget):
     def __init__(self, serv):
@@ -129,7 +130,6 @@ class buttons(QtWidgets.QWidget):
                 k += 1
             layout.addWidget(tempW)
         layout.setAlignment(QtCore.Qt.AlignCenter) #without this line the buttons won't remaing close and  centered
-
 
 class SudokuTable(QtWidgets.QWidget):
 
@@ -193,13 +193,17 @@ class SudokuTable(QtWidgets.QWidget):
     def __assignSignals(self):
         QtCore.QObject.connect(self.resetButton, QtCore.SIGNAL('clicked()'), self.resetTable)
         QtCore.QObject.connect(self.undoButton, QtCore.SIGNAL('clicked()'), self.undo)
+        QtCore.QObject.connect(self.deleteButton, QtCore.SIGNAL('clicked()'), self.emptyCell)
 
     def __rightPart(self):
         mainL = QtWidgets.QVBoxLayout()
         tempL = QtWidgets.QHBoxLayout()
         tempL.addWidget(self.resetButton)
         tempL.addWidget(self.undoButton)
+        templ2 = QtWidgets.QHBoxLayout()
+        templ2.addWidget(self.deleteButton)
         mainL.addLayout(tempL)
+        mainL.addLayout(templ2)
         mainL.addWidget(buttons(self.__serv))
       #  mainL.setAlignment(QtCore.Qt.AlignCenter)
         return mainL
@@ -215,9 +219,11 @@ class SudokuTable(QtWidgets.QWidget):
         self.sudokuTable = self.generateTableGUI()
         self.tempLayout.addWidget(self.sudokuTable)
         self.resetButton = QtWidgets.QPushButton("RESET")
-        self.undoButton = QtWidgets.QPushButton("Undo")
+        self.undoButton = QtWidgets.QPushButton("UNDO")
+        self.deleteButton = QtWidgets.QPushButton("DELETE")
         self.resetButton.setStyleSheet("background-color: #00bbf9;")
         self.undoButton.setStyleSheet("background-color: #00bbf9;")
+        self.deleteButton.setStyleSheet("background-color: #00bbf9;")
         self.tempLayout.addLayout(self.__rightPart())
         self.__assignSignals()
         self.setWindowTitle("Sudoku!")
@@ -236,10 +242,14 @@ class SudokuTable(QtWidgets.QWidget):
         try:
             self.__serv.undo()
         except Exception as e:
-            box = QtWidgets.QMessageBox()
-            box.setText(str(e))
-            box.setWindowTitle("Warning!")
-            box.exec()
+            errorBox(str(e))
+    
+    @QtCore.Slot()
+    def emptyCell(self):
+        try:
+            self.__serv.emptyCell()
+        except Exception as e:
+            errorBox(str(e))
         
 def generateRandomMatrix(h, l):
     matrix = []
