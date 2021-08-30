@@ -263,10 +263,9 @@ def runTests():
     t.run()
 
 if __name__ == "__main__":
-    runTests()
-    serv = sudokuService()
+   # runTests()
     app = QtWidgets.QApplication([])
-    #matrix = generateRandomMatrix(9, 9)
+    serv = sudokuService()
     widget = SudokuTable(serv)
     widget.show()
 

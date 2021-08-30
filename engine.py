@@ -19,16 +19,31 @@ class undoClass:
 
 
 class sudokuService(Observable, FocusObservable):
+    def __loadMatrix(self):
+        matrix = []
+        with open("sol.txt", "r") as f:
+            for i in range(0, 8):
+                line = f.readline()
+                el = str(line).split(' ')
+                el.pop()
+                for nr in el:
+                    matrix.append(int(nr))
+                print(line)
+        for i in range(0, 9):
+            matrix.append(-1)
+        print(matrix)
+        return matrix
+
     def __init__(self):
         super().__init__()
-        self.__baseMatrix = [-1] * 81
+        self.__baseMatrix = self.__loadMatrix()
         self.__matrix = self.__baseMatrix[:]
         self.__undo = undoClass()
         self.__x = None
         self.__y = None
         self.__currentCell = None
-        self.__filledCells = 0
-        self.__startingFilledCells = 0
+        self.__filledCells = 72
+        self.__startingFilledCells = 72
 
     def __resetCellCoordinates(self):
         self.__x, self.__y, self.__currentCell = None, None, None
@@ -41,6 +56,9 @@ class sudokuService(Observable, FocusObservable):
 
     def __checkColumn(self, x, y):
         for i in range(0, 9):
+            el1 = self.__matrix[i * 9 + y]
+            el2 = self.__matrix[x * 9 + y]
+            print(el1, el2, abs(el2 - el1) < 0.001)
             if i != x and self.__matrix[i * 9 + y] == self.__matrix[x * 9 + y]:
                 return False
         return True
@@ -93,21 +111,24 @@ class sudokuService(Observable, FocusObservable):
             self.__resetCellCoordinates()
         Observable.notify(self, x, y)
         if self.__currentCell != None:
-            self.__currentCell.focusCell()
+            self.__currentCell.focusCell(None)
 
     def setNumber(self, x, y, number, T = None):
         if str(T).lower() != "undo":
             self.__undo.addAction(self.deleteNumber, x, y, self.__matrix[x * 9 + y], "undo")
         self.__matrix[x * 9 + y] = number
-        #Observable.notify(self, x, y)
+        Observable.notify(self, x, y) # set the number in the cell and draw it without focus
         if str(T).lower() != "undo" and self.__currentCell != None:
-            self.__currentCell.focusCell(None)
+            self.__currentCell.focusCell(None) # focus the cell
         if str(T).lower() == "undo":
             self.__resetCellCoordinates()
         self.__checkChoice(x, y)
         self.__filledCells += 1
         #game WON
-        if self.__filledCells:
+        print("We have currently {} cells left".format(81 - self.__filledCells))
+        if self.__filledCells == 81: 
+            print("Congrats you won!")
+            raise Exception("Congratulations! You Won!")
             #to fill with close and new game box
             pass
         
@@ -127,7 +148,7 @@ class sudokuService(Observable, FocusObservable):
         self.__resetCellCoordinates()
 
     def setCurrentCell(self, cell):
-        if self.__x != None and self.__y != None and (self.__x != cell.getX() and self.__y != cell.getY()):
+        if self.__x != None and self.__y != None and self.__currentCell != cell:
             FocusObservable.unfocusObject(self)
         self.__x = cell.getX()
         self.__y = cell.getY()
